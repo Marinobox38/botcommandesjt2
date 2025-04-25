@@ -20,7 +20,7 @@ intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # ========== TÂCHE DE FOND ==========
-@tasks.loop(minutes=30)
+@tasks.loop(minutes=120)
 async def check_updates():
     url = "https://journaltheatral.com/blog"
     try:
