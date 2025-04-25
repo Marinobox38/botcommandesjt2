@@ -7,13 +7,6 @@ from discord.ext import commands, tasks
 from discord.ext import commands, tasks
 from discord import app_commands
 from keep_alive import keep_alive
-import aiohttp
-import feedparser
-import openai
-import os
-
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
 
 load_dotenv()
 DISCORD_TOKEN= os.getenv('DISCORD_TOKEN')
@@ -27,41 +20,26 @@ intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # ========== TÂCHE DE FOND ==========
-@tasks.loop(minutes=120)
-async def check_updates():
-    url = "https://journaltheatral.com/blog"
-    try:
-        response = requests.get(url)
-        soup = BeautifulSoup(response.text, "html.parser")
+@tasks.loop(hours=2)
+async def check_update():
+    feed = feedparser.parse(FEED_URL)
+    latest_article = feed.entries[0]
+    title = latest_article.title
+    link = latest_article.link
+    description = latest_article.summary
 
-        article = soup.select_one("article")
-        if not article:
-            print("Aucun article trouvé.")
-            return
+    # Couper la description si elle est trop longue
+    short_description = (description[:200] + '...') if len(description) > 200 else description
 
-        title_tag = article.select_one("h2")
-        article_title = title_tag.get_text(strip=True) if title_tag else "Titre non disponible"
+    channel = await bot.fetch_channel(CHANNEL_ID)
+    embed = discord.Embed(
+        title=title,
+        url=link,
+        description=short_description,
+        color=discord.Color.blue()
+    )
+    await channel.send(content="@notif-blog", embed=embed)
 
-        link_tag = article.select_one("a[href]")
-        article_url = link_tag["href"] if link_tag else url
-        if not article_url.startswith("http"):
-            article_url = "https://journaltheatral.com" + article_url
-
-        description_tag = article.select_one("p")
-        article_description = description_tag.get_text(strip=True)[:300] + "..." if description_tag else "Pas de description."
-
-        embed = discord.Embed(
-            title=article_title,
-            url=article_url,
-            description=article_description,
-            color=discord.Color.blue()
-        )
-
-        channel = await bot.fetch_channel(CHANNEL_ID)
-        await channel.send(content=f"<@&{ROLE_ID}>", embed=embed)
-
-    except Exception as e:
-        print(f"Erreur lors de la vérification : {e}")
 
 # ========== COMMANDES SLASH ==========
 @bot.command()
