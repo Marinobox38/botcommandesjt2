@@ -145,6 +145,32 @@ async def clear_command(interaction: discord.Interaction, nombre: int):
     deleted = await interaction.channel.purge(limit=nombre)
     await interaction.response.send_message(f"🧹 {len(deleted)} messages supprimés.", ephemeral=False)
 
+# ========== VERIF =========
+import feedparser
+
+FEED_URL = "https://journaltheatral.com/blog/"
+
+async def send_latest_article(channel):
+    feed = feedparser.parse(FEED_URL)
+    latest = feed.entries[0]
+    title = latest.title
+    link = latest.link
+    description = latest.summary if "summary" in latest else "Pas de description."
+
+    short_desc = (description[:200] + '...') if len(description) > 200 else description
+
+    embed = discord.Embed(
+        title=title,
+        url=link,
+        description=short_desc,
+        color=discord.Color.purple()
+    )
+
+    # Mention réelle du rôle
+    notif_role = discord.utils.get(channel.guild.roles, name="notif-blog")
+    mention = notif_role.mention if notif_role else "@notif-blog"
+
+    await channel.send(content=mention, embed=embed)
 
 
 # ========== ÉVÉNEMENTS ==========
