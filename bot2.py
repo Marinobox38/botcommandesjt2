@@ -7,6 +7,13 @@ from discord.ext import commands, tasks
 from discord.ext import commands, tasks
 from discord import app_commands
 from keep_alive import keep_alive
+import aiohttp
+import feedparser
+import openai
+import os
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
 
 load_dotenv()
 DISCORD_TOKEN= os.getenv('DISCORD_TOKEN')
